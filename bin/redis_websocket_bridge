@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+
+# Subscribe to all redis channel messages and deliver them
+# to any websockets that have registered ro receive them.
+
+# The typical pattern is to use GlobalID IDs as channel name.
+
+require 'optparse'
+
+require_relative '../lib/redis_websocket_bridge/server'
+
+options = {}
+OptionParser.new do |opts|
+  opts.on('-v', '--verbose') do |verbose|
+    options[:verbose] = verbose
+  end
+
+  opts.on('-p', '--port port', Float) do |port|
+    options[:port] = port.to_i
+  end
+end.parse!
+
+RedisWebsocketBridge::Server.run options

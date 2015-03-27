@@ -1,0 +1,15 @@
+.rwb-t {
+    display: inline-block;
+    width: 18em;
+    color: #666;
+    font-style: italic;
+    padding-left: 2px;
+}
+
+.rwb-m {
+    display: inline-block;
+}
+
+.rwb-major .rwb-m {
+    font-weight: bolder;
+}

@@ -24,9 +24,8 @@ module RedisWebsocketBridge
       to_global_id.to_s
     end
 
-    # attributes are added to data.instance JSON attribute.
-    # add_to_instance: precalculated values to add to instance after standard and "attributes"
-    # extra is added to base data object. can signal behavior at this stage or to a client
+    # attributes are obtained by self[attribute]
+    # merge hash is simply merged as-is
     def publish(msg, no_publish: false, attributes: [], merge: {})
       unless no_publish
         data = {

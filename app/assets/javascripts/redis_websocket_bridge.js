@@ -1,3 +1,12 @@
+/*
+  Minimal client-side integration:
+  1) Include this .js
+  2) Call RWB.init({ addToId: 'element-id' });
+  3) Call RWB.register('channel_name');
+
+  Now whenever a message is published to the channel through any means, it will be pushed here.
+ */
+
 var RWB = {
   options: {
     url: 'ws://' + window.location.hostname + ':9919',
@@ -6,6 +15,7 @@ var RWB = {
 
     elementFactory: function(msg) { return RWB.elementFactory(msg) }, // convert msg to DOM element
     addToId: null, // DOM element with id to auto prepend/append messages to, null to not auto add
+                   // This is the only property that needs to be set to get UI integration without writing any other javascript.
     addPosition: 'prepend', // prepend|append
 
     cssClassAttribute: 'type', // add msg.<cssClassAttribute> as div class if adding automatically
@@ -15,6 +25,9 @@ var RWB = {
     refreshDelay: 5, // seconds
 
     notifications: true, // show a notification for "major" events
+    notificationIcon: '/images/logo_small.png',
+    requestNotificationPermission: true, // automatically take care of negotiating notification permission with user
+    notificationPermissionHandler: function() { return RWB.notificationPermissionFactory(); }, // add markup, handle clicks etc to allow user to allow notifications. The default is to add a fixed 
 
     sounds: true, // play a sound for "major" events
     soundEl: 'rwb-sound', // attach this to body to play sound
@@ -29,6 +42,16 @@ var RWB = {
     console.log('RWB.init()');
     for (o in options) {
       RWB.options[o] = options[o];
+    }
+
+    if (RWB.options.notifications && RWB.options.requestNotificationPermission) {
+      if (window.Notification && Notification.permission !== "granted") {
+        Notification.requestPermission(function (status) {
+          if (Notification.permission !== status) {
+            Notification.permission = status;
+          }
+        });
+      }
     }
   },
 
@@ -48,7 +71,7 @@ var RWB = {
         var data = $.parseJSON(e.data);
         RWB.addLiveMessage(data);
 
-        if (data.type == 'refresh') {
+        if (data.refresh) {
           if (RWB.options.autoRefresh) {
             RWB.websocket.close();
 
@@ -120,6 +143,15 @@ var RWB = {
           document.body.appendChild(audioEl);
         }
         audioEl.play();
+      }
+
+      if (RWB.options.notifications) {
+        var notificationOps = {
+          body: msg.msg,
+          tag: msg.publish_id,
+          icon: RWB.options.notificationIcon
+        };
+        var notification = new Notification('RWB message', notificationOps);
       }
 
     }

@@ -5,7 +5,7 @@ module RedisWebsocketBridge
 
       initializer 'redis_websocket_bridge.assets.precompile' do |app|
         puts 'RedisWebsocketBridge assets precompile'
-        app.config.assets.precompile += %w(redis_websocket_bridge.js redis_websocket_bridge.css)
+        app.config.assets.precompile += %w(redis_websocket_bridge.js redis_websocket_bridge.css rwb-rm-logo.png)
       end
     end
   end

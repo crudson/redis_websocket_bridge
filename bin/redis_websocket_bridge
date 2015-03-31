@@ -12,11 +12,19 @@ require_relative '../lib/redis_websocket_bridge/server'
 options = {}
 OptionParser.new do |opts|
   opts.on('-v', '--verbose') do |verbose|
-    options[:verbose] = verbose
+    options[:log_level] = 'DEBUG'
   end
 
   opts.on('-p', '--port port', Float) do |port|
     options[:port] = port.to_i
+  end
+
+  opts.on('-t', '--logtick log tick', Integer) do |log_tick|
+    options[:log_tick] = log_tick.to_i
+  end
+
+  opts.on('-p', '--prefix log prefix') do |prefix|
+    options[:log_prefix] = prefix
   end
 end.parse!
 

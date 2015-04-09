@@ -27,11 +27,11 @@ var RWB = {
     notifications: true, // show a notification for "major" events
     notificationIcon: '/images/logo_small.png',
     requestNotificationPermission: true, // automatically take care of negotiating notification permission with user
-    notificationPermissionHandler: function() { return RWB.notificationPermissionFactory(); }, // add markup, handle clicks etc to allow user to allow notifications. The default is to add a fixed 
+//  notificationPermissionRequester: function() { return RWB.notificationPermissionRequestor(); }, // add markup, handle clicks etc to allow user to allow notifications. The default is to add a fixed 
 
     sounds: true, // play a sound for "major" events
     soundEl: 'rwb-sound', // attach this to body to play sound
-    soundPath: '/assets/msg.ogg',
+    soundPath: '/sounds/msg.ogg',
 
     debug: true
   },
@@ -53,39 +53,23 @@ var RWB = {
         });
       }
     }
+
   },
 
-  register: function(channels) {
-    console.log('RWB.register()');
-
-    channels = [].concat(channels);
-
+  connect: function(cb) {
     if (!RWB.websocket || RWB.websocket.readyState == WebSocket.CLOSED) {
       RWB.websocket = new WebSocket(RWB.options.url);
-
-      RWB.websocket.onmessage = function(e) {
+      
+      RWB.websocket.onmessage = function(d) {
         if (RWB.options.debug) {
-          console.log(e.data);
+          console.log(d.data);
         }
 
-        var data = $.parseJSON(e.data);
+        var data = $.parseJSON(d.data);
         RWB.addLiveMessage(data);
 
-        if (data.refresh) {
-          if (RWB.options.autoRefresh) {
-            RWB.websocket.close();
-
-            var secs = RWB.options.refreshDelay;
-            var tick = function() {
-              RWB.addLiveMessage({ msg: 'reloading in ' + secs + 's' });
-              if (--secs > -1) {
-                window.setTimeout(tick, 1000);
-              } else {
-                window.location = window.location.origin + '/searches/';
-              }
-            };
-            tick();
-          }
+        if (data.refresh && RWB.options.autoRefresh) {
+          RWB.refresh();
         }
       };
 
@@ -94,12 +78,55 @@ var RWB = {
       };
 
       RWB.websocket.onopen = function() {
-        for (var i = 0; i < channels.length; i++) {
-          RWB.addLiveMessage({ msg: 'wsb registering gid=' + channels[i] });
-          RWB.websocket.send(JSON.stringify({ cmd: 'register', gid: channels[i] }));
+        if (cb) {
+          cb();
         }
       };
+    } else {
+      if (cb) {
+        cb();
+      }
     }
+  },
+
+  disconnect: function() {
+    RWB.websocket.close();
+  },
+
+  /*
+    register channel(s), connecting websocket if necessary.
+    callback cb when done (in case we need to asynchronously ensure the websocket is connected).
+  */
+  register: function(channels, cb) {
+    RWB.connect(function() {
+      channels = [].concat(channels);
+      for (var i = 0; i < channels.length; i++) {
+        RWB.addLiveMessage({ msg: 'rwb registering channel=' + channels[i] });
+        RWB.websocket.send(JSON.stringify({ cmd: 'register', gid: channels[i] }));
+      }
+
+      if (cb) {
+        cb();
+      }
+    });
+  },
+
+  unregister: function(channel) {
+  },
+
+  refresh: function() {
+    RWB.websocket.close();
+
+    var secs = RWB.options.refreshDelay;
+    var tick = function() {
+      RWB.addLiveMessage({ msg: 'reloading in ' + secs + 's' });
+      if (--secs > -1) {
+        window.setTimeout(tick, 1000);
+      } else {
+        window.location = window.location.origin + '/searches/';
+      }
+    };
+    tick();
   },
 
   elementFactory: function(msg) {
@@ -139,7 +166,7 @@ var RWB = {
         var audioEl = document.getElementById(RWB.options.soundEl);
         if (! audioEl) {
           audioEl = document.createElement('audio');
-          audioEl.setAttribute('src', '/sounds/msg.ogg');
+          audioEl.setAttribute('src', RWB.options.soundPath);
           document.body.appendChild(audioEl);
         }
         audioEl.play();

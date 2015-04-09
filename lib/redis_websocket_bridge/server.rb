@@ -35,7 +35,7 @@ module RedisWebsocketBridge
 
       case
       when log_tick <= 0
-        @logger.fatal(log_progname) { "log_tick is too small (#{log_tick})" }
+        @logger.fatal(log_progname) { "invalid log_tick (#{log_tick})" }
         exit 1
       when log_tick < 60
         @logger.warn(log_progname) { "log_tick is small (#{log_tick})" }
@@ -44,8 +44,8 @@ module RedisWebsocketBridge
       @clients = Hash.new { |h, k| h[k] = [] }
       @global_stats = {
         total_clients: 0,
-        received: 0,
-        sent: 0
+        ws_received: 0,
+        ws_sent: 0
       }
 
       EventMachine.run do
@@ -60,9 +60,10 @@ module RedisWebsocketBridge
         @logger.info(log_progname_redis) { "subscribing to redis channels with pattern:#{pattern}" }
         pubsub.on(:pmessage) do |key, channel, msg|
           @logger.debug(log_progname_redis) { "pmessage key=#{key} channel=#{channel} msg=#{msg}" }
-          @clients[channel].each do |c|
-            @global_stats[:sent] += 1
-            c.send msg
+          @clients[channel].each do |ws|
+            @global_stats[:ws_sent] += 1
+            ws.stats[:sent] += 1
+            ws.send msg
           end
         end
 
@@ -71,23 +72,23 @@ module RedisWebsocketBridge
         # ===================
         EventMachine::WebSocket.start(host: "0.0.0.0", port: port) do |ws|
           @global_stats[:total_clients] += 1
-
           @logger.info(log_progname_websocket) { "new WebSocket client ##{@total_clients}: #{ws.inspect}" }
-
-          # Also track outgoing messages
-          # duration of connection
-          # other meta/stats?
-          ws.instance_variable_set(:@stats, {
-            received: 0,
-            sent: 0,
-            created_at: Time.new,
-            opened_at: nil,
-            last_sent_at: nil
-          })
+          # per socket stats
+          ws.instance_eval do
+            @stats = {
+              received: 0,
+              sent: 0,
+              channels: [],
+              opened_at: Time.new
+            }
+            def stats
+              @stats
+            end
+          end
 
           ws.onopen do
             @logger.debug(log_progname_websocket) { "onopen" }
-            ws.instance_variable_get(:@stats)[:opened_at] = Time.new
+            ws.stats[:opened_at] = Time.new
             ws.send({ t: Time.now, msg: 'Connected' }.to_json)
           end
 
@@ -95,8 +96,8 @@ module RedisWebsocketBridge
           # All we do here is register which redis channel messages should be bridged to this websocket.
           # TODO: handle patterns: translate to regexp
           ws.onmessage do |msg|
-            ws.instance_variable_get(:@stats)[:received] += 1
-            @global_stats[:received] += 1
+            ws.stats[:received] += 1
+            @global_stats[:ws_received] += 1
             @logger.debug(log_progname_websocket) { "onmessage:#{msg.inspect}" }
 
             data = JSON.parse msg
@@ -110,7 +111,7 @@ module RedisWebsocketBridge
           end
 
           ws.onclose do
-            @logger.debug(log_progname_websocket) { "onclose: #{@msg_count} messages on this connection were received." }
+            @logger.debug(log_progname_websocket) { "closing connection stats=#{ws.stats.inspect}" }
             @clients.delete ws
           end
 

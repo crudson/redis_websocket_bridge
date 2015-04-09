@@ -4,6 +4,8 @@
     color: #666;
     font-style: italic;
     padding-left: 2px;
+    vertical-align: top;
+    text-align: center;
 }
 
 .rwb-m {

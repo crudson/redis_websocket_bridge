@@ -1,10 +1,11 @@
 require 'redis_websocket_bridge/publishable'
+require 'global_id'
 
-class TestModel
-  def id
-    "1234567890"
-  end
+# GlobalID needs an "app"
+GlobalID.app = 'Foo'
 
+class TestModelWithGlobalID
+  include GlobalID::Identification
   include RedisWebsocketBridge::Publishable
 
   # An example callback
@@ -13,6 +14,11 @@ class TestModel
   end
 
   attr_accessor :some_attribute
+
+  # GlobalID needs an id
+  def id
+    '1234567890'
+  end
 
   # mimic accessing attributes ala ActiveModel
   def [](attr)

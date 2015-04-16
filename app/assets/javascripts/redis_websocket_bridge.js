@@ -102,7 +102,7 @@ var RWB = {
       channels = [].concat(channels);
       for (var i = 0; i < channels.length; i++) {
         RWB.addLiveMessage({ msg: 'rwb registering channel=' + channels[i] });
-        RWB.websocket.send(JSON.stringify({ cmd: 'register', gid: channels[i] }));
+        RWB.websocket.send(JSON.stringify({ cmd: 'register', pub_id: channels[i] }));
       }
 
       if (cb) {

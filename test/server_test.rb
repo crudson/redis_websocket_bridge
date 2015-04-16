@@ -1,4 +1,5 @@
 require 'minitest/autorun'
+
 require 'faye/websocket'
 require 'timeout'
 
@@ -10,12 +11,11 @@ class ServerTest < Minitest::Test
   end
 
   def test_register_sends_confirmation
-    # TODO: get timeout from config
     Timeout::timeout(2) do
       EM.run do
         ws = Faye::WebSocket::Client.new('ws://localhost:9919')
         ws.on :open do |event|
-          ws.send({cmd: 'register', gid: @test_model.publish_id}.to_json)
+          ws.send({ cmd: 'register', pub_id: @test_model.publish_id }.to_json)
         end
 
         ws.on :message do |event|
@@ -29,21 +29,27 @@ class ServerTest < Minitest::Test
     flunk 'timed out'
   end
 
-  def test_correct_message_received
-    Timeout::timeout(5) do
+  def test_correct_messages_received
+    messages = [*1..10].map { |i| "Test message ##{i}" }
+
+    Timeout::timeout(2) do
       EM.run do
         ws = Faye::WebSocket::Client.new('ws://localhost:9919')
         ws.on :open do |event|
-          ws.send({cmd: 'register', gid: @test_model.publish_id}.to_json)
+          ws.send({ cmd: 'register', pub_id: @test_model.publish_id }.to_json)
         end
 
         ws.on :message do |event|
           data = JSON.parse event.data
-          p data
           if data['msg'] == 'Connected'
-            p @test_model.publish "Test Message 1"
-            p @test_model.publish "Test Message 2"
-            p @test_model.publish "Test Message 3"
+            # server has associated this client with TestModel's pub_id so we will now receive messages for it
+            # send out some messages, then check we have been notified of them
+            EM.next_tick do
+              messages.each { |m| @test_model.publish m }
+            end
+          else
+            assert_equal data['msg'], messages.delete(data['msg'])
+            EM.stop if messages.empty?
           end
         end
       end
@@ -51,4 +57,5 @@ class ServerTest < Minitest::Test
   rescue Timeout::Error
     flunk 'timed out'
   end
+
 end

@@ -1,5 +1,5 @@
 require 'minitest/autorun'
-require 'minitest/pride'
+require 'global_id'
 
 require_relative 'test_model'
 
@@ -83,13 +83,39 @@ class PublishableTest < Minitest::Test
     end
   end
 
-  def test_callback_can_halt_publish
-    skip 'Need a way to detect if redis publish happened'
+  def test_publish_id_default
+    new_class = Class.new do
+      include RedisWebsocketBridge::Publishable
+    end
+    self.class.const_set :TestClass, new_class
+    c = new_class.new
+    assert_includes c.methods, :publish_id
+    assert_equal "#{new_class.name}/#{c.object_id}", c.publish_id
   end
 
-  def test_publish_burst
-    50.times do |i|
-      @test_model.publish "test #{i + 1}"
+  def test_publish_id_with_id
+    new_class = Class.new do
+      attr_accessor :id
+      include RedisWebsocketBridge::Publishable
     end
+    self.class.const_set :TestClass1, new_class
+    c = new_class.new
+    c.id = '123'
+    assert_includes c.methods, :publish_id
+    assert_equal "#{new_class.name}/#{c.id}", c.publish_id
+  end
+
+  def test_publish_id_with_global_id
+    GlobalID.app = 'Foo'
+    new_class = Class.new do
+      include GlobalID::Identification
+      include RedisWebsocketBridge::Publishable
+      attr_accessor :id
+    end
+    self.class.const_set :TestClass2, new_class
+    c = new_class.new
+    c.id = '123'
+    assert_includes c.methods, :publish_id
+    assert_equal c.to_global_id.to_s, c.publish_id
   end
 end

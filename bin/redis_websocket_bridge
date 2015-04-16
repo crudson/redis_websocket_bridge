@@ -9,6 +9,8 @@ require 'optparse'
 
 require_relative '../lib/redis_websocket_bridge/server'
 
+STDOUT.sync = true
+
 options = {}
 OptionParser.new do |opts|
   opts.on('-v', '--verbose') do |verbose|
@@ -28,4 +30,5 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-RedisWebsocketBridge::Server.run options
+server = RedisWebsocketBridge::Server.new options
+server.run!

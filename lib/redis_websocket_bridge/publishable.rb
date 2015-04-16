@@ -31,12 +31,31 @@ module RedisWebsocketBridge
           @redis_websocket_bridge_callbacks << block
         end
       end
-    end
 
-    # channel name to publish to.
-    # override if not using GlobalID::Identification or want to use another value
-    def publish_id
-      to_global_id.to_s
+      # Set default publish_id
+      # If GlobalID::Identification is mised into the include class then use that, otherwise set a default.
+      # Note that using GlobalID needs GlobalID.app set and an id method on the class (active_record/rails does this).
+      # Override publish_id in the class including this module to customize this value.
+      include_class.class_eval do
+        if defined?(GlobalID::Identification) &&
+            included_modules.include?(GlobalID::Identification) &&
+            GlobalID.app
+          def publish_id
+            to_global_id.to_s
+          end
+        elsif instance_methods.include?(:id)
+          def publish_id
+            "#{self.class.name}/#{id}"
+          end
+        else
+          # you almost certainly don't want to rely on object_id, rather something persistent across object instances
+          # representing an entity. Instead override publish_id or provide an id method before including this module
+          def publish_id
+            "#{self.class.name}/#{object_id}"
+          end
+        end
+      end
+
     end
 
     # attributes are obtained by self[attribute]
@@ -66,7 +85,8 @@ module RedisWebsocketBridge
       end
 
       unless no_publish
-        Publishable.get_redis.publish(payload[:pub_id], payload.to_json)
+        redis_channel = "rwb://#{payload[:pub_id]}"
+        Publishable.get_redis.publish(redis_channel, payload.to_json)
       end
 
       payload

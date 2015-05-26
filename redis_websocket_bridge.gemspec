@@ -20,4 +20,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'minitest'
   s.add_development_dependency 'faye-websocket'
   s.add_development_dependency 'globalid'
+#  s.add_development_dependency 'poltergeist'
 end

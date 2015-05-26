@@ -108,6 +108,7 @@ module RedisWebsocketBridge
     end
 
     def on_log_tick
+      # TODO: option to only print stats if unchanged since last log
       @logger.info("#{@log_prefix}.stats") { @global_stats.inspect }
       # @logger.debug("#{@log_prefix}.stats") { @clients.keys.inspect }
     end

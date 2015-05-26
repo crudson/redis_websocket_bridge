@@ -4,8 +4,15 @@ require 'global_id'
 require_relative 'test_model'
 
 class PublishableTest < Minitest::Test
+  @@test_class_count = 0
+
   def setup
     @test_model = TestModel.new
+  end
+
+  # Be able to provide unique class names when defining classes within test methods
+  def new_test_model_const
+    "TestClass#{@@test_class_count += 1}".to_sym
   end
 
   def test_configure_yields_hash
@@ -83,14 +90,17 @@ class PublishableTest < Minitest::Test
     end
   end
 
-  def test_publish_id_default
+  def test_publish_id_without_valid_id
     new_class = Class.new do
+      attr_reader :id
       include RedisWebsocketBridge::Publishable
     end
-    self.class.const_set :TestClass, new_class
+    self.class.const_set new_test_model_const, new_class
     c = new_class.new
     assert_includes c.methods, :publish_id
-    assert_equal "#{new_class.name}/#{c.object_id}", c.publish_id
+    assert_raises RedisWebsocketBridge::PublishableError do
+      c.publish_id
+    end
   end
 
   def test_publish_id_with_id
@@ -98,7 +108,7 @@ class PublishableTest < Minitest::Test
       attr_accessor :id
       include RedisWebsocketBridge::Publishable
     end
-    self.class.const_set :TestClass1, new_class
+    self.class.const_set new_test_model_const, new_class
     c = new_class.new
     c.id = '123'
     assert_includes c.methods, :publish_id
@@ -112,7 +122,7 @@ class PublishableTest < Minitest::Test
       include RedisWebsocketBridge::Publishable
       attr_accessor :id
     end
-    self.class.const_set :TestClass2, new_class
+    self.class.const_set new_test_model_const, new_class
     c = new_class.new
     c.id = '123'
     assert_includes c.methods, :publish_id

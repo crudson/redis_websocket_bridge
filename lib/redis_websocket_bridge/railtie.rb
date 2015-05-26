@@ -1,11 +1,8 @@
 module RedisWebsocketBridge
   module Rails
     class Engine < ::Rails::Engine
-      puts 'RedisWebsocketBridge railtie loaded'
-
       initializer 'redis_websocket_bridge.assets.precompile' do |app|
-        puts 'RedisWebsocketBridge assets precompile'
-        app.config.assets.precompile += %w(redis_websocket_bridge.js redis_websocket_bridge.css rwb-rm-logo.png)
+        app.config.assets.precompile += %w(redis_websocket_bridge.js redis_websocket_bridge.css rwb-rm-logo.png msg.ogg)
       end
     end
   end

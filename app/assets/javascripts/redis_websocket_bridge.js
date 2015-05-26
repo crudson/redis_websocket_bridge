@@ -7,32 +7,58 @@
   Now whenever a message is published to the channel through any means, it will be pushed here.
  */
 
+console.log('RWB load');
 var RWB = {
   options: {
+    // URL of websocket server
     url: 'ws://' + window.location.hostname + ':9919',
 
-    onLiveMessage: null, // callback when message received, passing (msg, el), el = null unless append|prependToId
+    // callback when message received, passing (msg, el), el = null unless append|prependToId
+    onLiveMessage: null,
 
-    elementFactory: function(msg) { return RWB.elementFactory(msg) }, // convert msg to DOM element
-    addToId: null, // DOM element with id to auto prepend/append messages to, null to not auto add
-                   // This is the only property that needs to be set to get UI integration without writing any other javascript.
-    addPosition: 'prepend', // prepend|append
+    // convert msg to DOM element
+    elementFactory: function(msg) { return RWB.elementFactory(msg) },
 
-    cssClassAttribute: 'type', // add msg.<cssClassAttribute> as div class if adding automatically
+    // DOM element with id to auto prepend/append messages to, null to not auto add
+    // This is the only property that needs to be set to get UI integration without writing any other javascript.
+    addToId: null,
 
-    autoRefresh: true, // invoke refresh() callback when a message is received with { refresh: true }
-    refresh: function() { return window.location.origin; }, // function to get new location from if autoRefresh = true
-    refreshDelay: 5, // seconds
+    // prepend|append
+    addPosition: 'prepend',
 
-    notifications: true, // show a notification for "major" events
-    notificationIcon: '/images/logo_small.png',
-    requestNotificationPermission: true, // automatically take care of negotiating notification permission with user
-//  notificationPermissionRequester: function() { return RWB.notificationPermissionRequestor(); }, // add markup, handle clicks etc to allow user to allow notifications. The default is to add a fixed 
+    // add msg.<cssClassAttribute> as div class if adding automatically
+    cssClassAttribute: 'type',
 
-    sounds: true, // play a sound for "major" events
-    soundEl: 'rwb-sound', // attach this to body to play sound
-    soundPath: '/sounds/msg.ogg',
+    // invoke refresh() callback when a message is received with { refresh: true }
+    autoRefresh: true,
 
+    // function to get new location from if autoRefresh = true
+    refreshLocation: function() { return window.location; },
+
+    // seconds
+    refreshDelay: 5,
+
+    // show a notification for "major" events
+    notifications: true,
+
+    // asset to display as notification icon
+    notificationIcon: '/assets/rwb-rm-logo.png',
+
+    // automatically take care of negotiating notification permission with user
+    //  notificationPermissionRequester: function() { return RWB.notificationPermissionRequestor(); },
+    // add markup, handle clicks etc to allow user to allow notifications. The default is to add a fixed 
+    requestNotificationPermission: true,
+
+    // play a sound for "major" events
+    sounds: true,
+
+    // attach this to body to play sound
+    soundEl: 'rwb-sound',
+
+    // sound asset to play
+    soundPath: '/assets/msg.ogg',
+
+    // extra messages printed to console
     debug: true
   },
 
@@ -57,19 +83,19 @@ var RWB = {
   },
 
   connect: function(cb) {
-    if (!RWB.websocket || RWB.websocket.readyState == WebSocket.CLOSED) {
+    if (!RWB.websocket || RWB.websocket.readyState === WebSocket.CLOSED) {
       RWB.websocket = new WebSocket(RWB.options.url);
-      
-      RWB.websocket.onmessage = function(d) {
+
+      RWB.websocket.onmessage = function(e) {
         if (RWB.options.debug) {
-          console.log(d.data);
+          console.log(e.data);
         }
 
-        var data = $.parseJSON(d.data);
+        var data = JSON.parse(e.data);
         RWB.addLiveMessage(data);
 
         if (data.refresh && RWB.options.autoRefresh) {
-          RWB.refresh();
+          RWB.doRefresh();
         }
       };
 
@@ -90,7 +116,13 @@ var RWB = {
   },
 
   disconnect: function() {
+    if (RWB.options.debug) {
+      console.log('disconnected');
+    }
+
     RWB.websocket.close();
+
+    RWB.addLiveMessage({ msg: 'disconnected', type: 'disconnect' });
   },
 
   /*
@@ -101,6 +133,9 @@ var RWB = {
     RWB.connect(function() {
       channels = [].concat(channels);
       for (var i = 0; i < channels.length; i++) {
+        if (RWB.options.debug) {
+          console.log('registering ' + channels[i]);
+        }
         RWB.addLiveMessage({ msg: 'rwb registering channel=' + channels[i] });
         RWB.websocket.send(JSON.stringify({ cmd: 'register', pub_id: channels[i] }));
       }
@@ -114,7 +149,7 @@ var RWB = {
   unregister: function(channel) {
   },
 
-  refresh: function() {
+  doRefresh: function() {
     RWB.websocket.close();
 
     var secs = RWB.options.refreshDelay;
@@ -123,7 +158,7 @@ var RWB = {
       if (--secs > -1) {
         window.setTimeout(tick, 1000);
       } else {
-        window.location = window.location.origin + '/searches/';
+        window.location = RWB.options.refreshLocation();
       }
     };
     tick();
@@ -152,7 +187,7 @@ var RWB = {
     if (RWB.options.addToId) {
       var parent = document.getElementById(RWB.options.addToId);
       el = RWB.options.elementFactory(msg);
-      if (RWB.options.addPosition == 'append') {
+      if (RWB.options.addPosition === 'append') {
         parent.appendChild(el);
       } else {
         parent.insertBefore(el, parent.firstChild);

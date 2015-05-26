@@ -4,6 +4,8 @@ require 'redis'
 # Initially made to be mixed into ActiveRecord with GlobalID::Identification (i.e. > rails 4), but
 # will work with any plain old object (just set publish_id).
 module RedisWebsocketBridge
+  class PublishableError < StandardError; end
+
   module Publishable
     # configuration passed to redis client
     # see https://github.com/redis/redis-rb#getting-started
@@ -32,10 +34,12 @@ module RedisWebsocketBridge
         end
       end
 
-      # Set default publish_id
-      # If GlobalID::Identification is mised into the include class then use that, otherwise set a default.
+      # Set default publish_id method (not the value, that is returned by the method)
+      # If GlobalID::Identification is mixed into the include class already (it must be before including
+      # this module) then use that, otherwise use .id
       # Note that using GlobalID needs GlobalID.app set and an id method on the class (active_record/rails does this).
-      # Override publish_id in the class including this module to customize this value.
+      #
+      # Override publish_id in the class including this module to customize this value to something else.
       include_class.class_eval do
         if defined?(GlobalID::Identification) &&
             included_modules.include?(GlobalID::Identification) &&
@@ -43,15 +47,11 @@ module RedisWebsocketBridge
           def publish_id
             to_global_id.to_s
           end
-        elsif instance_methods.include?(:id)
-          def publish_id
-            "#{self.class.name}/#{id}"
-          end
         else
-          # you almost certainly don't want to rely on object_id, rather something persistent across object instances
-          # representing an entity. Instead override publish_id or provide an id method before including this module
           def publish_id
-            "#{self.class.name}/#{object_id}"
+            id_val = self.id
+            raise(PublishableError, "No id") unless id_val
+            "#{self.class.name}/#{id_val}"
           end
         end
       end
@@ -73,7 +73,8 @@ module RedisWebsocketBridge
       }
 
       [*attributes].reduce(payload) { |acc, cur| acc[cur] = self[cur]; acc }
-      payload.merge! merge
+
+      payload.merge!(merge) if merge
 
       if self.class.instance_variable_defined? :@redis_websocket_bridge_callbacks
         # if any of the callbacks return falsey, halt the chain
@@ -90,6 +91,17 @@ module RedisWebsocketBridge
       end
 
       payload
+    end
+
+    # Allow publishing without including module
+    # Will complain if there is no publish_id
+    # To publish anything, use publish_to_channel
+    def self.publish(obj, msg)
+      raise "not implemented"
+    end
+
+    def self.publish_to_channel(channel, msg)
+      raise "not implemented"
     end
 
   end

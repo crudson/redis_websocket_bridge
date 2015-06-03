@@ -8,17 +8,6 @@
 require 'optparse'
 require_relative '../lib/redis_websocket_bridge/server'
 
-pid_file = File.join(Dir.tmpdir, 'rwb.pid')
-if File.exists? pid_file
-  STDERR.puts "pid file exists at #{pid_file}"
-  exit -1
-end
-open(pid_file, 'w') { |out| out.puts $$ }
-at_exit do
-  puts "deleting pid file #{pid_file}"
-  File.delete pid_file
-end
-
 STDOUT.sync = true
 
 options = {}
@@ -38,7 +27,32 @@ OptionParser.new do |opts|
   opts.on('-p', '--prefix log prefix') do |prefix|
     options[:log_prefix] = prefix
   end
+
+  opts.on('-f', '--forceexec', 'keep running even if not bootstrapping servers (e.g. to keep foreman running)') do |force_exec|
+    options[:force_exec] = force_exec
+  end
 end.parse!
 
-server = RedisWebsocketBridge::Server.new options
-server.run!
+pid_file = File.join(Dir.tmpdir, 'rwb.pid')
+if File.exists? pid_file
+  puts "pid file exists at #{pid_file}"
+
+  if options[:force_exec]
+    puts "pid file exists but not bootstrapping servers and will pause indefinitely"
+    puts "to not do this do not run with -f or stop other processes and ensure pid file is deleted"
+    loop do
+      sleep 1000
+    end
+  else
+    exit -1
+  end
+else
+  open(pid_file, 'w') { |out| out.puts $$ }
+  at_exit do
+    puts "deleting pid file #{pid_file}"
+    File.delete pid_file
+  end
+
+  server = RedisWebsocketBridge::Server.new options
+  server.run!
+end

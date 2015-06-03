@@ -118,11 +118,13 @@ module RedisWebsocketBridge
     # Kicks off server loop and reactor components.
     # Does not return until server stopped.
     def run!
-      %w(INT TERM).each do |signal|
-        Signal.trap(signal) do
-          EventMachine.stop
-        end
-      end
+      # Not required anymore
+      # %w(INT TERM).each do |signal|
+      #   Signal.trap(signal) do
+      #     puts "stopping EM"
+      #     EventMachine.stop
+      #   end
+      # end
 
       EventMachine.run do
         # 1 redis subscriber

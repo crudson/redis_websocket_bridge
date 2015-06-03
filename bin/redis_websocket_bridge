@@ -6,8 +6,18 @@
 # The typical pattern is to use GlobalID IDs as channel name.
 
 require 'optparse'
-
 require_relative '../lib/redis_websocket_bridge/server'
+
+pid_file = File.join(Dir.tmpdir, 'rwb.pid')
+if File.exists? pid_file
+  STDERR.puts "pid file exists at #{pid_file}"
+  exit -1
+end
+open(pid_file, 'w') { |out| out.puts $$ }
+at_exit do
+  puts "deleting pid file #{pid_file}"
+  File.delete pid_file
+end
 
 STDOUT.sync = true
 

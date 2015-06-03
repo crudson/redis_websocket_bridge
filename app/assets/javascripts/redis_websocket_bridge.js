@@ -49,14 +49,15 @@ var RWB = {
     // add markup, handle clicks etc to allow user to allow notifications. The default is to add a fixed 
     requestNotificationPermission: true,
 
-    // play a sound for "major" events
+    // play a sound for "major" and "error" events
     sounds: true,
 
     // attach this to body to play sound
     soundEl: 'rwb-sound',
 
-    // sound asset to play
-    soundPath: '/assets/msg.ogg',
+    // sound assets to play
+    majorSoundPath: '/assets/msg.ogg',
+    errorSoundPath: '/assets/err.ogg',
 
     // extra messages printed to console
     debug: true
@@ -194,14 +195,14 @@ var RWB = {
       }
     }
 
-    if (msg.major) {
+    if (msg.major || msg.error) {
       el.classList.add('rwb-major');
 
       if (RWB.options.sounds) {
         var audioEl = document.getElementById(RWB.options.soundEl);
         if (! audioEl) {
           audioEl = document.createElement('audio');
-          audioEl.setAttribute('src', RWB.options.soundPath);
+          audioEl.setAttribute('src', (msg.major ? RWB.options.majorSoundPath : RWB.options.errorSoundPath));
           document.body.appendChild(audioEl);
         }
         audioEl.play();

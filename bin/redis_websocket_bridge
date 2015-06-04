@@ -40,9 +40,7 @@ if File.exists? pid_file
   if options[:force_exec]
     puts "pid file exists but not bootstrapping servers and will pause indefinitely"
     puts "to not do this do not run with -f or stop other processes and ensure pid file is deleted"
-    loop do
-      sleep 1000
-    end
+    sleep
   else
     exit -1
   end

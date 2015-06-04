@@ -4,7 +4,7 @@ require 'global_id'
 # GlobalID needs an "app"
 GlobalID.app = 'Foo'
 
-class TestModelWithGlobalID
+class TestModelWithGlobalId
   include GlobalID::Identification
   include RedisWebsocketBridge::Publishable
 

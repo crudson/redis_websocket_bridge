@@ -11,6 +11,16 @@ Perfect for long running or asynchronous task progress notification.
 - javascript asset to easily connect UI to server, register for messages on certain models and receive published messages
 
 
+
+### Simple Example
+
+To see a simple example:
+- start up a server `./redis_websocket_bridge -v`
+- open test/example.html in a browser
+- run `ruby -I test -e "require 'test_model_with_global_id'; TestModelWithGlobalId.new.emit_burst"`
+
+
+
 ## Usage
 
 ### Server

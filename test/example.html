@@ -8,13 +8,13 @@
     <script type="text/javascript">
       window.onload = function() {
         RWB.init({ url: 'ws://localhost:9919', addToId: 'messages' });
-        RWB.register('gid://Foo/TestModelWithGlobalID/1234567890');
+        RWB.register('gid://Foo/TestModelWithGlobalId/1234567890');
       };
     </script>
 
     Now generate a bunch of messages, run the following from root of gem:
     <pre>
-    ruby -I test -e "require 'test_model_with_global_id'; TestModelWithGlobalID.new.emit_burst"
+    ruby -I test -e "require 'test_model_with_global_id'; TestModelWithGlobalId.new.emit_burst"
     </pre>
 
     <div id="messages">

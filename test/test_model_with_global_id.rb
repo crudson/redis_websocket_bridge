@@ -24,4 +24,11 @@ class TestModelWithGlobalID
   def [](attr)
       self.send attr
   end
+
+  def emit_burst
+    200.times do
+      publish (30 + rand(70)).times.reduce([]) { |a, c| a << [*?a..?z].sample }.join
+      sleep(rand * 0.05)
+    end
+  end
 end

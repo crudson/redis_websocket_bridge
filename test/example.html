@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <script src="../app/assets/javascripts/redis_websocket_bridge.js"></script>
+    <link rel="stylesheet" media="screen" href="../app//assets/stylesheets/redis_websocket_bridge.css" />
+  </head>
+
+  <body>
+    <script type="text/javascript">
+      window.onload = function() {
+        RWB.init({ url: 'ws://localhost:9919', addToId: 'messages' });
+        RWB.register('gid://Foo/TestModelWithGlobalID/1234567890');
+      };
+    </script>
+
+    Now generate a bunch of messages, run the following from root of gem:
+    <pre>
+    ruby -I test -e "require 'test_model_with_global_id'; TestModelWithGlobalID.new.emit_burst"
+    </pre>
+
+    <div id="messages">
+    </div>
+
+  </body>
+</html>

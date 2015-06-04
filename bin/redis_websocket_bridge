@@ -47,6 +47,7 @@ if File.exists? pid_file
     exit -1
   end
 else
+  options.delete :force_exec
   open(pid_file, 'w') { |out| out.puts $$ }
   at_exit do
     puts "deleting pid file #{pid_file}"

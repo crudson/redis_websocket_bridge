@@ -18,13 +18,17 @@ Perfect for long running or asynchronous task progress notification.
 The server is EventMachine based and can be run through a shell script or rake task. Running it could be added to any process management framework like Foreman.
 
 ```bash
-./bin/redis_websocket_bridge
+./bin/redis_websocket_bridge -v
+
+```bash
+bundle exec redis_websocket_bridge -v
 
 Usage: redis_websocket_bridge [options]
     -v, --verbose
         --port port
     -t, --logtick log tick
     -p, --prefix log prefix
+    -f, --forceexec just loop if server already running (e.g. so foreman won't exit if we want to run in a different process)
 ```
 
 The server will listen for any model messages that are published, accept websocket connections and deliver any message published to clients that have asked for them.

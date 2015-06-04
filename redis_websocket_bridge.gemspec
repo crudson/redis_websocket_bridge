@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.summary = 'Fast broadcasting of messages from any ruby object to websocket clients (via redis)'
   s.description = 'EventMachine based websocket server that broadcasts redis channel messages to any number of subscribers. Easy integration with any ruby object via module. Provides a rails engine (via railtie) and compiled js and css assets for shortest path integration.'
 
-  s.files = Dir.glob('lib/**')
+  s.files = Dir.glob('lib/**/*')
   s.executables = ['redis_websocket_bridge']
   s.require_paths = ['lib']
 

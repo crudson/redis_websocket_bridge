@@ -19,8 +19,7 @@ The server is EventMachine based and can be run through a shell script or rake t
 
 ```bash
 ./bin/redis_websocket_bridge -v
-
-```bash
+or
 bundle exec redis_websocket_bridge -v
 
 Usage: redis_websocket_bridge [options]
@@ -38,7 +37,10 @@ Every `logtick` seconds statistics will be printed to the console regarding clie
 
 ### Application
 
-Add to `gem 'redis_websocket_bridge'` to `Gemfile`.
+Add to `Gemfile`.
+```ruby
+gem 'redis_websocket_bridge', require: 'redis_websocket_bridge/publishable'
+```
 
 Add the railtie to rails (if using rails) to `config/application.rb`
 ```ruby

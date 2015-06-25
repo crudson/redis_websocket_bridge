@@ -121,9 +121,10 @@ var RWB = {
       console.log('disconnected');
     }
 
-    RWB.websocket.close();
-
-    RWB.addLiveMessage({ msg: 'disconnected', type: 'disconnect' });
+    if (RWB.websocket) {
+      RWB.websocket.close();
+      RWB.addLiveMessage({ msg: 'disconnected', type: 'disconnect' });
+    }
   },
 
   /*

@@ -1,4 +1,4 @@
-require_relative 'lib/redis_websocket_bridge/version'
+require File.join(File.dirname(__FILE__), 'lib', 'redis_websocket_bridge', 'version')
 
 Gem::Specification.new do |s|
   s.name = 'redis_websocket_bridge'

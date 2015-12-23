@@ -39,8 +39,30 @@ module RedisWebsocketBridge
       # values are arrays of websocket connections to be notified
       @clients = {} # Hash.new { |h, k| h[k] = [] }
 
+      load_stats
+    end
+
+    def stats_file
+      File.join(ENV['HOME'], '.rwb-stats')
+    end
+
+    def load_stats
       vars = %i(total_clients redis_received ws_received ws_sent)
       @global_stats = Struct.new('RWBStats', *vars).new(*([0] * vars.length))
+      file = stats_file
+      if File.exists? file
+        JSON.parse(open(file).read).each_pair { |k, v| @global_stats[k] = v }
+        @logger.info("#{@log_prefix}.stats") { "loaded stats from #{file}" }
+      else
+        @logger.info("#{@log_prefix}.stats") { "no stats file found (#{file}), stats will all start at 0" }
+      end
+    end
+
+    def save_stats
+      open(stats_file, 'w') do |out|
+        out.write JSON.pretty_generate(@global_stats.to_h)
+      end
+      @logger.info("#{@log_prefix}.stats") { "wrote stats to #{stats_file}" }
     end
 
     def on_hiredis_pmessage(key, channel, msg)
@@ -118,13 +140,9 @@ module RedisWebsocketBridge
     # Kicks off server loop and reactor components.
     # Does not return until server stopped.
     def run!
-      # Not required anymore
-      # %w(INT TERM).each do |signal|
-      #   Signal.trap(signal) do
-      #     puts "stopping EM"
-      #     EventMachine.stop
-      #   end
-      # end
+      at_exit do
+        save_stats
+      end
 
       EventMachine.run do
         # 1 redis subscriber

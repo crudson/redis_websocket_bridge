@@ -30,6 +30,8 @@ var RWB = {
     cssClassAttribute: 'type',
 
     // invoke refresh() callback when a message is received with { refresh: true }
+    // the value of a message's refresh can also be an integer (override seconds to countdown from until refresh)
+    // 0 to instruct refresh to happen immediately
     autoRefresh: true,
 
     // function to get new location from if autoRefresh = true
@@ -96,7 +98,7 @@ var RWB = {
         RWB.addLiveMessage(data);
 
         if (data.refresh && RWB.options.autoRefresh) {
-          RWB.doRefresh();
+          RWB.doRefresh(data.refresh);
         }
       };
 
@@ -151,10 +153,12 @@ var RWB = {
   unregister: function(channel) {
   },
 
-  doRefresh: function() {
+  doRefresh: function(delaySecs) {
     RWB.websocket.close();
 
-    var secs = RWB.options.refreshDelay;
+// TODO: this
+//!isNaN(parseFloat(n)) && isFinite(n);
+    var secs = Math.min(RWB.options.refreshDelay, Math.abs(~~parseInt(delaySecs)));
     var tick = function() {
       RWB.addLiveMessage({ msg: 'reloading in ' + secs + 's' });
       if (--secs > -1) {

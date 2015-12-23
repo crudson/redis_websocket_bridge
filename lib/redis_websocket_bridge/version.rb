@@ -1,3 +1,3 @@
 module RedisWebsocketBridge
-  VERSION = "0.5.7.4"
+  VERSION = "0.5.8"
 end

@@ -98,7 +98,7 @@ var RWB = {
         RWB.addLiveMessage(data);
 
         if (data.refresh && RWB.options.autoRefresh) {
-          RWB.doRefresh(data.refresh);
+          RWB.doRefresh(data.refresh, data);
         }
       };
 
@@ -153,7 +153,7 @@ var RWB = {
   unregister: function(channel) {
   },
 
-  doRefresh: function(delaySecs) {
+  doRefresh: function(delaySecs, data) {
     RWB.websocket.close();
 
 // TODO: this
@@ -164,7 +164,7 @@ var RWB = {
       if (--secs > -1) {
         window.setTimeout(tick, 1000);
       } else {
-        window.location = RWB.options.refreshLocation();
+        window.location = RWB.options.refreshLocation(data);
       }
     };
     tick();

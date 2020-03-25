@@ -58,11 +58,13 @@ module RedisWebsocketBridge
       end
     end
 
-    def save_stats
+    def save_stats(write_to_log: false)
       open(stats_file, 'w') do |out|
         out.write JSON.pretty_generate(@global_stats.to_h)
       end
-      @logger.info("#{@log_prefix}.stats") { "wrote stats to #{stats_file}" }
+      if write_to_log
+        @logger.debug("#{@log_prefix}.stats") { "wrote stats to #{stats_file}" }
+      end
     end
 
     def on_hiredis_pmessage(key, channel, msg)
@@ -135,13 +137,14 @@ module RedisWebsocketBridge
       # TODO: option to only print stats if unchanged since last log
       @logger.info("#{@log_prefix}.stats") { @global_stats.inspect }
       # @logger.debug("#{@log_prefix}.stats") { @clients.keys.inspect }
+      save_stats
     end
 
     # Kicks off server loop and reactor components.
     # Does not return until server stopped.
     def run!
       at_exit do
-        save_stats
+        save_stats write_to_log: true
       end
 
       EventMachine.run do
